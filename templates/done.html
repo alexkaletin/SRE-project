@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block main %}
+<div class="px-4 lg:px-8">
+    <header>
+        <h1 class="my-4 tracking-wide text-3xl font-light"> Completed tasks </h1>
+    </header>
+
+    <section class="block md:w-auto lg:w-2/3 shadow-md rounded-2xl bg-white overflow-x-auto whitespace-nowrap">
+        <div class="p-4">
+            <div class="flex-col">
+                <div class="flex items-center font-semibold">
+                    <div class="px-4 py-2 min-w-full md:min-w-0 md:w-1/2">Task</div>
+                    <div class="px-4 py-2 min-w-1/2 md:min-w-0 md:w-1/4">Completed on</div>
+                    <div class="px-4 py-2 min-w-1/2 md:min-w-0 md:w-1/4">By</div>
+                </div>
+                {% for done_item in done_items %}
+                <div class="flex items-center">
+                    <div class="px-4 py-2 min-w-full md:min-w-0 md:w-1/2 whitespace-normal">{{ done_item.content }}</div>
+                    <div class="px-4 py-2 min-w-1/2 md:min-w-0 md:w-1/4">{{ done_item.date_completed }}</div>
+                    <div class="px-4 py-2 min-w-1/2 md:min-w-0 md:w-1/4">{{ done_item.author }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

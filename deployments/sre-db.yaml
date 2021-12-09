@@ -1,0 +1,104 @@
+# TODO: For true high availability and scalability, use one of these solutions:
+#
+#       https://v1-18.docs.kubernetes.io/docs/concepts/storage/storage-classes/#provisioner
+#
+#       Storage classes with internal provisioner helps isolating the management
+#       of disk storage away from the application. Database need not be aware of
+#       the underlying disk it uses.
+#
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: sre-postgres
+  labels:
+    app: postgres
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: postgres
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-postgres
+  labels:
+    app: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - image: postgres:14.0-alpine3.14
+        name: postgres
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sre-secret
+              key: PG_PASSWORD
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: sre-config
+              key: PG_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: sre-config
+              key: PG_DATABASE
+        ports:
+        - containerPort: 5432
+          name: postgres
+        volumeMounts:
+        - name: postgres-persistent-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-persistent-storage
+        persistentVolumeClaim:
+          claimName: sre-postgres-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sre-postgres-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: sre-postgres-pv
+  volumeMode: Filesystem
+  storageClassName: local-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sre-postgres-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  storageClassName: local-storage
+  local:
+    path: /data/srepostgres
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: storage
+          operator: In
+          values:
+          - database

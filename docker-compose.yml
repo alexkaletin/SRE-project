@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+
+  postgres:
+    image: "postgres:14.0-alpine3.14"
+    logging:
+      driver: none
+    container_name: postgres-server
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DATABASE}
+    volumes:
+      - type: volume
+        source: postgres-volume
+        target: /var/lib/postgresql
+    restart: always
+
+  backend:
+    build:
+      context: "./"
+      dockerfile: Dockerfile
+    environment:
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_DATABASE=${PG_DATABASE}
+      - SECRET_KEY=${SECRET_KEY}
+      - EXTERNAL_IP=${EXTERNAL_IP}
+    depends_on:
+      - postgres
+    restart: always
+
+  frontend:
+    build:
+      context: "./"
+      dockerfile: nginx.Dockerfile
+    ports:
+      - "127.0.0.1:10080:80"
+    environment:
+      - NGINX_HOST=backend
+      - STATIC_ROOT=/app
+    depends_on:
+      - backend
+    restart: always
+
+
+volumes:
+  postgres-volume:

@@ -1,0 +1,32 @@
+# Deprecated in favor of cloudflared
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sre-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sre-app
+            port:
+              number: 8000
+      - path: /static
+        pathType: Prefix
+        backend:
+          service:
+            name: sre-nginx
+            port:
+              number: 80
+      - path: /favicon.ico
+        pathType: Exact
+        backend:
+          service:
+            name: sre-nginx
+            port:
+              number: 80
